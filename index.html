@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find the Break – a reconciliation game</title>
+<meta name="description" content="Spot the mismatches between the books and the bank statement before the clock runs out. A reconciliation puzzle by Rawley George.">
+<meta property="og:title" content="Find the Break – can you beat my time?">
+<meta property="og:description" content="A 3-round reconciliation puzzle: spot the breaks between the ledger and the bank statement.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 34 34%27%3E%3Crect width=%2734%27 height=%2734%27 rx=%279%27 fill=%27%230f5c4a%27/%3E%3Ccircle cx=%2715%27 cy=%2715%27 r=%277.5%27 fill=%27none%27 stroke=%27white%27 stroke-width=%272.6%27/%3E%3Cline x1=%2720.5%27 y1=%2720.5%27 x2=%2726%27 y2=%2726%27 stroke=%27white%27 stroke-width=%273%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rawleygeorge-ui.github.io/find-the-break/">
+<meta property="og:image" content="https://rawleygeorge-ui.github.io/find-the-break/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+:root{
+  --bg:#f6f5f1; --panel:#ffffff; --ink:#1d1d1b; --muted:#6b6a65; --line:#e3e1da;
+  --accent:#0f5c4a; --accent-ink:#ffffff; --pick:#fff2c6; --pick-line:#e0b400;
+  --good:#1e7b4f; --good-bg:#e3f4ea; --bad:#b23a2e; --bad-bg:#fbe7e4; --miss:#8a5a00; --miss-bg:#fdf0d5;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141413; --panel:#1f1f1d; --ink:#ecebe6; --muted:#a19f97; --line:#34332f;
+    --accent:#4fb894; --accent-ink:#0d1f19; --pick:#4a3f12; --pick-line:#d9b23a;
+    --good:#6fd39f; --good-bg:#1b3a2a; --bad:#f08a7e; --bad-bg:#45231f; --miss:#f0c060; --miss-bg:#3d3015;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141413; --panel:#1f1f1d; --ink:#ecebe6; --muted:#a19f97; --line:#34332f;
+  --accent:#4fb894; --accent-ink:#0d1f19; --pick:#4a3f12; --pick-line:#d9b23a;
+  --good:#6fd39f; --good-bg:#1b3a2a; --bad:#f08a7e; --bad-bg:#45231f; --miss:#f0c060; --miss-bg:#3d3015;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:14px}
+h1{font-size:26px;margin:0;letter-spacing:-.01em}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);margin:2px 0 0}
+.hud{display:flex;gap:10px;flex-wrap:wrap}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-variant-numeric:tabular-nums;font-size:14px}
+.chip b{font-weight:600}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.intro p{margin:.4em 0}
+.intro ul{margin:.4em 0 .8em;padding-left:1.2em}
+button{font:inherit;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:9px 16px;cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button:disabled{opacity:.5;cursor:default}
+.books{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media (max-width:760px){.books{grid-template-columns:1fr}}
+.book h2{font-size:15px;margin:0 0 8px;display:flex;justify-content:space-between;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;color:var(--muted);font-weight:500;padding:6px 6px;border-bottom:1px solid var(--line)}
+td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+td.amt,th.amt{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td:first-child{white-space:nowrap}
+td.ref{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;white-space:nowrap}
+tr.row{cursor:pointer;transition:background .12s}
+tr.row:hover td{background:color-mix(in srgb,var(--pick) 45%,transparent)}
+tr.row.picked td{background:var(--pick)}
+tr.row.picked td:first-child{box-shadow:inset 3px 0 0 var(--pick-line)}
+tr.row.good td{background:var(--good-bg)} tr.row.good td:first-child{box-shadow:inset 3px 0 0 var(--good)}
+tr.row.bad td{background:var(--bad-bg)} tr.row.bad td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
+tr.row.miss td{background:var(--miss-bg)} tr.row.miss td:first-child{box-shadow:inset 3px 0 0 var(--miss)}
+.locked tr.row{cursor:default}
+.actions{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap}
+.hint{color:var(--muted);font-size:13.5px}
+.results{margin-top:14px}
+.results h3{margin:0 0 8px;font-size:17px}
+.exp{list-style:none;padding:0;margin:0}
+.exp li{padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:10px}
+.tag{font-size:11.5px;font-weight:600;border-radius:6px;padding:2px 7px;white-space:nowrap;height:fit-content}
+.tag.good{background:var(--good-bg);color:var(--good)} .tag.miss{background:var(--miss-bg);color:var(--miss)} .tag.bad{background:var(--bad-bg);color:var(--bad)}
+.final{text-align:center}
+.final .big{font-size:44px;font-weight:700;margin:6px 0;font-variant-numeric:tabular-nums}
+.final .row2{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+footer{margin-top:26px;color:var(--muted);font-size:13px;text-align:center;line-height:1.7}
+footer a{color:var(--accent)}
+.hidden{display:none}
+.intro{display:grid;grid-template-columns:1.2fr 1fr;gap:18px;align-items:center}
+@media (max-width:760px){.intro{grid-template-columns:1fr}.intro .art{max-width:320px;margin:0 auto;order:-1}}
+.art{width:100%;height:auto;display:block}
+.a-paper{fill:var(--panel);stroke:var(--line);stroke-width:1.5;filter:drop-shadow(0 6px 10px rgba(0,0,0,.08))}
+.a-headA{fill:var(--accent)} .a-headB{fill:color-mix(in srgb,var(--accent) 22%,var(--panel))}
+.a-title{font:700 11px system-ui,sans-serif;letter-spacing:.12em;fill:var(--accent)}
+.a-titleA{font:700 11px system-ui,sans-serif;letter-spacing:.12em;fill:var(--accent-ink)}
+.a-line{fill:var(--muted);opacity:.28} .a-lineD{fill:var(--ink);opacity:.55}
+.a-hit{fill:var(--pick);stroke:var(--pick-line);stroke-width:1.5}
+.a-link{fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:4 4}
+.a-ne{fill:var(--bad)} .a-neT{font:700 20px system-ui,sans-serif;fill:#fff;text-anchor:middle}
+.a-lens{fill:color-mix(in srgb,var(--panel) 25%,transparent);stroke:var(--ink);stroke-width:6}
+.a-handle{stroke:var(--ink);stroke-width:9;stroke-linecap:round}
+.a-glass{animation:scan 4s ease-in-out infinite;transform-origin:150px 125px}
+@keyframes scan{0%,100%{transform:translate(0,0) rotate(0)}50%{transform:translate(-6px,-4px) rotate(-4deg)}}
+@media (prefers-reduced-motion:reduce){.a-glass{animation:none}}
+.brand{display:flex;align-items:center;gap:10px}
+.brand svg{width:34px;height:34px;flex:none}
+.final .art{max-width:240px;margin:0 auto 6px}
+.burst{display:inline-block;animation:pop .5s ease-out}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><svg viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="9" fill="var(--accent)"/><circle cx="15" cy="15" r="7.5" fill="none" stroke="var(--accent-ink)" stroke-width="2.6"/><line x1="20.5" y1="20.5" x2="26" y2="26" stroke="var(--accent-ink)" stroke-width="3" stroke-linecap="round"/><path d="M11.5 13.2h7M11.5 16.8h7M17.4 10.8l-4 8.4" stroke="var(--accent-ink)" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <div>
+        <h1>Find the <span>Break</span></h1>
+        <p class="sub">The books say one thing. The bank says another. Spot every mismatch.</p>
+      </div>
+    </div>
+    <div class="hud">
+      <span class="chip">Round <b id="hRound">–</b>/3</span>
+      <span class="chip">Time <b id="hTime">0.0s</b></span>
+      <span class="chip">Score <b id="hScore">0</b></span>
+    </div>
+  </header>
+
+  <section id="intro" class="card intro">
+    <div>
+    <p>You have the company ledger on one side and the bank statement on the other. Most lines match. Some don't.</p>
+    <ul>
+      <li>Click every line that's part of a <b>break</b>: a missing entry, wrong amount, duplicate, or something posted to the wrong side.</li>
+      <li>Then hit <b>Reconcile</b>. +100 for each break found, −50 for each clean line flagged, plus a speed bonus.</li>
+      <li>3 rounds, each one harder. Your clock keeps running.</li>
+    </ul>
+    <p id="best" class="hint"></p>
+    <button class="primary" id="startBtn">Start reconciling</button>
+    </div>
+    <svg class="art" viewBox="0 0 380 250" role="img" aria-label="A ledger and a bank statement with a mismatched line circled under a magnifying glass">
+  <g transform="rotate(5 270 130)">
+    <rect x="190" y="30" width="165" height="200" rx="12" class="a-paper"/>
+    <rect x="190" y="30" width="165" height="34" rx="12" class="a-headB"/>
+    <rect x="190" y="52" width="165" height="12" class="a-headB"/>
+    <text x="205" y="53" class="a-title">BANK</text>
+    <rect x="205" y="80" width="90" height="7" rx="3.5" class="a-line"/><rect x="315" y="80" width="28" height="7" rx="3.5" class="a-line"/>
+    <rect x="205" y="102" width="70" height="7" rx="3.5" class="a-line"/><rect x="315" y="102" width="28" height="7" rx="3.5" class="a-line"/>
+    <rect x="198" y="118" width="150" height="22" rx="6" class="a-hit"/>
+    <rect x="205" y="126" width="80" height="7" rx="3.5" class="a-lineD"/><rect x="312" y="126" width="31" height="7" rx="3.5" class="a-lineD"/>
+    <rect x="205" y="150" width="96" height="7" rx="3.5" class="a-line"/><rect x="315" y="150" width="28" height="7" rx="3.5" class="a-line"/>
+    <rect x="205" y="172" width="60" height="7" rx="3.5" class="a-line"/><rect x="315" y="172" width="28" height="7" rx="3.5" class="a-line"/>
+    <rect x="205" y="194" width="84" height="7" rx="3.5" class="a-line"/><rect x="315" y="194" width="28" height="7" rx="3.5" class="a-line"/>
+  </g>
+  <g transform="rotate(-5 105 130)">
+    <rect x="22" y="22" width="165" height="200" rx="12" class="a-paper"/>
+    <rect x="22" y="22" width="165" height="34" rx="12" class="a-headA"/>
+    <rect x="22" y="44" width="165" height="12" class="a-headA"/>
+    <text x="37" y="45" class="a-titleA">LEDGER</text>
+    <rect x="37" y="72" width="88" height="7" rx="3.5" class="a-line"/><rect x="147" y="72" width="28" height="7" rx="3.5" class="a-line"/>
+    <rect x="37" y="94" width="66" height="7" rx="3.5" class="a-line"/><rect x="147" y="94" width="28" height="7" rx="3.5" class="a-line"/>
+    <rect x="30" y="110" width="150" height="22" rx="6" class="a-hit"/>
+    <rect x="37" y="118" width="80" height="7" rx="3.5" class="a-lineD"/><rect x="144" y="118" width="31" height="7" rx="3.5" class="a-lineD"/>
+    <rect x="37" y="142" width="96" height="7" rx="3.5" class="a-line"/><rect x="147" y="142" width="28" height="7" rx="3.5" class="a-line"/>
+    <rect x="37" y="164" width="58" height="7" rx="3.5" class="a-line"/><rect x="147" y="164" width="28" height="7" rx="3.5" class="a-line"/>
+    <rect x="37" y="186" width="80" height="7" rx="3.5" class="a-line"/><rect x="147" y="186" width="28" height="7" rx="3.5" class="a-line"/>
+  </g>
+  <path d="M176 126 C 200 112, 196 140, 214 130" class="a-link"/>
+  <circle cx="196" cy="126" r="15" class="a-ne"/>
+  <text x="196" y="132" class="a-neT">≠</text>
+  <g class="a-glass">
+    <circle cx="148" cy="122" r="30" class="a-lens"/>
+    <line x1="170" y1="145" x2="196" y2="172" class="a-handle"/>
+  </g>
+</svg>
+  </section>
+
+  <section id="game" class="hidden">
+    <div class="books" id="books">
+      <div class="card book"><h2><span>Ledger (our books)</span><span id="lCount"></span></h2><table id="ledger"></table></div>
+      <div class="card book"><h2><span>Bank statement</span><span id="bCount"></span></h2><table id="bank"></table></div>
+    </div>
+    <div class="actions">
+      <span class="hint" id="hint"></span>
+      <div style="display:flex;gap:10px">
+        <button class="primary" id="reconBtn">Reconcile</button>
+        <button class="primary hidden" id="nextBtn">Next round</button>
+      </div>
+    </div>
+    <div class="card results hidden" id="results"></div>
+  </section>
+
+  <section id="final" class="card final hidden">
+    <svg class="art" viewBox="0 0 380 250" role="img" aria-label="A ledger and a bank statement with a mismatched line circled under a magnifying glass">
+  <g transform="rotate(5 270 130)">
+    <rect x="190" y="30" width="165" height="200" rx="12" class="a-paper"/>
+    <rect x="190" y="30" width="165" height="34" rx="12" class="a-headB"/>
+    <rect x="190" y="52" width="165" height="12" class="a-headB"/>
+    <text x="205" y="53" class="a-title">BANK</text>
+    <rect x="205" y="80" width="90" height="7" rx="3.5" class="a-line"/><rect x="315" y="80" width="28" height="7" rx="3.5" class="a-line"/>
+    <rect x="205" y="102" width="70" height="7" rx="3.5" class="a-line"/><rect x="315" y="102" width="28" height="7" rx="3.5" class="a-line"/>
+    <rect x="198" y="118" width="150" height="22" rx="6" class="a-hit"/>
+    <rect x="205" y="126" width="80" height="7" rx="3.5" class="a-lineD"/><rect x="312" y="126" width="31" height="7" rx="3.5" class="a-lineD"/>
+    <rect x="205" y="150" width="96" height="7" rx="3.5" class="a-line"/><rect x="315" y="150" width="28" height="7" rx="3.5" class="a-line"/>
+    <rect x="205" y="172" width="60" height="7" rx="3.5" class="a-line"/><rect x="315" y="172" width="28" height="7" rx="3.5" class="a-line"/>
+    <rect x="205" y="194" width="84" height="7" rx="3.5" class="a-line"/><rect x="315" y="194" width="28" height="7" rx="3.5" class="a-line"/>
+  </g>
+  <g transform="rotate(-5 105 130)">
+    <rect x="22" y="22" width="165" height="200" rx="12" class="a-paper"/>
+    <rect x="22" y="22" width="165" height="34" rx="12" class="a-headA"/>
+    <rect x="22" y="44" width="165" height="12" class="a-headA"/>
+    <text x="37" y="45" class="a-titleA">LEDGER</text>
+    <rect x="37" y="72" width="88" height="7" rx="3.5" class="a-line"/><rect x="147" y="72" width="28" height="7" rx="3.5" class="a-line"/>
+    <rect x="37" y="94" width="66" height="7" rx="3.5" class="a-line"/><rect x="147" y="94" width="28" height="7" rx="3.5" class="a-line"/>
+    <rect x="30" y="110" width="150" height="22" rx="6" class="a-hit"/>
+    <rect x="37" y="118" width="80" height="7" rx="3.5" class="a-lineD"/><rect x="144" y="118" width="31" height="7" rx="3.5" class="a-lineD"/>
+    <rect x="37" y="142" width="96" height="7" rx="3.5" class="a-line"/><rect x="147" y="142" width="28" height="7" rx="3.5" class="a-line"/>
+    <rect x="37" y="164" width="58" height="7" rx="3.5" class="a-line"/><rect x="147" y="164" width="28" height="7" rx="3.5" class="a-line"/>
+    <rect x="37" y="186" width="80" height="7" rx="3.5" class="a-line"/><rect x="147" y="186" width="28" height="7" rx="3.5" class="a-line"/>
+  </g>
+  <path d="M176 126 C 200 112, 196 140, 214 130" class="a-link"/>
+  <circle cx="196" cy="126" r="15" class="a-ne"/>
+  <text x="196" y="132" class="a-neT">≠</text>
+  <g class="a-glass">
+    <circle cx="148" cy="122" r="30" class="a-lens"/>
+    <line x1="170" y1="145" x2="196" y2="172" class="a-handle"/>
+  </g>
+</svg>
+    <p class="hint">Final score</p>
+    <div class="big" id="fScore">0</div>
+    <p id="fLine"></p>
+    <p class="hint" id="fBest"></p>
+    <div class="row2">
+      <button class="primary" id="shareBtn">Copy my score to share</button>
+      <button id="againBtn">Play again</button>
+    </div>
+  </section>
+
+  <footer>
+    Built by <a href="https://www.linkedin.com/in/rawley-george-884547272" target="_blank" rel="noopener">Rawley George</a>, a finance operations and automation professional.<br>
+    <a href="https://github.com/rawleygeorge-ui/find-the-break" target="_blank" rel="noopener">Source on GitHub</a> · All names and amounts are randomly generated.<br>
+    © 2026 Rawley George · Designed by rawsploit@gmail.com
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const PARTIES = ["Acme Industries","Blue Harbor Logistics","Brightwave Media","Cedar & Finch Ltd","Delta Freight Co","Evergreen Partners","Fairmont Supplies","Granite Peak Inc","Harbor Light Hotels","Ironwood Systems","Juniper Analytics","Kestrel Aviation","Lakeside Ventures","Maple Street Retail","Northwind Traders","Oakridge Holdings","Pinnacle Office Co","Redwood Consulting","Silverline Telecom","Westbrook Outfitters"];
+  const ROUNDS = [{pairs:8,breaks:2},{pairs:10,breaks:3},{pairs:12,breaks:4}];
+  const KINDS = ["transposed","notInBank","notInBooks","duplicate","wrongSide","shortReceipt"];
+  const EXPLAIN = {
+    transposed:"Transposed digits. The difference is divisible by 9, which is the classic sign of a keying error.",
+    notInBank:"In the books but not in the bank. Either a deposit in transit or money that was never banked. Chase it.",
+    notInBooks:"In the bank but not in the books. A bank charge or receipt nobody posted, so the ledger is understated.",
+    duplicate:"Posted twice in the books. One transaction, two entries, so the ledger balance is wrong by that amount.",
+    wrongSide:"Posted to the wrong side: a payment booked as a receipt, or the reverse. That swings the balance by twice the amount.",
+    shortReceipt:"Short receipt. The customer paid less, or the bank deducted a fee. The difference needs an entry."
+  };
+  const LABEL = {transposed:"Transposed amount",notInBank:"Missing from bank",notInBooks:"Missing from books",duplicate:"Duplicate posting",wrongSide:"Wrong side",shortReceipt:"Short receipt"};
+
+  let round=0, score=0, t0=0, timer=null, elapsed=0, roundStart=0, state=null, locked=false;
+
+  const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+  const pick=a=>a[rnd(0,a.length-1)];
+  const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;};
+  const fmt=n=>(n<0?"−":"")+Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+  const day=d=>String(d).padStart(2,"0")+" Oct";
+
+  function transpose(n){
+    const s=Math.round(n).toString();
+    for(let tries=0;tries<10;tries++){
+      const i=rnd(0,s.length-2);
+      if(s[i]!==s[i+1]){const t=s.slice(0,i)+s[i+1]+s[i]+s.slice(i+2);return Number(t);}
+    }
+    return n+90;
+  }
+
+  function buildRound(cfg){
+    const parties=shuffle(PARTIES.slice());
+    const pairs=[];
+    for(let i=0;i<cfg.pairs;i++){
+      const party=parties[i%parties.length];
+      const isReceipt=Math.random()<0.7;
+      const amt=rnd(8,240)*50+ (Math.random()<0.4? rnd(1,9)*10:0);
+      const d=rnd(1,28);
+      const ref=(isReceipt?"INV-":"PMT-")+rnd(10200,98900);
+      pairs.push({id:"p"+i,party,isReceipt,amt,d,ref});
+    }
+    const kinds=shuffle(KINDS.slice()).slice(0,cfg.breaks);
+    const breakIdx=shuffle([...Array(cfg.pairs).keys()]).slice(0,cfg.breaks);
+    const ledger=[], bank=[], breaks=[];
+    pairs.forEach((p,i)=>{
+      const k=breakIdx.indexOf(i)>=0?kinds[breakIdx.indexOf(i)]:null;
+      const sign=p.isReceipt?1:-1;
+      const L={id:p.id+"L",d:p.d,ref:p.ref,desc:(p.isReceipt?"Receipt – ":"Payment – ")+p.party,amt:sign*p.amt};
+      const B={id:p.id+"B",d:Math.min(28,p.d+rnd(0,2)),ref:p.ref,desc:(p.isReceipt?"TRANSFER IN ":"PAYMENT OUT ")+p.party.toUpperCase(),amt:sign*p.amt};
+      if(!k){ledger.push(L);bank.push(B);return;}
+      let rows=[];
+      if(k==="transposed"){L.amt=sign*transpose(p.amt);ledger.push(L);bank.push(B);rows=[L.id,B.id];}
+      if(k==="notInBank"){ledger.push(L);rows=[L.id];}
+      if(k==="notInBooks"){const fee={id:p.id+"B",d:p.d,ref:"BNK-"+rnd(100,999),desc:"BANK CHARGES – SERVICE FEE",amt:-rnd(3,40)*25};bank.push(fee);ledger.push(L);bank.push({...B,id:p.id+"B2"});rows=[fee.id];}
+      if(k==="duplicate"){const L2={...L,id:p.id+"L2"};ledger.push(L,L2);bank.push(B);rows=[L2.id,L.id];}
+      if(k==="wrongSide"){L.amt=-L.amt;L.desc=(p.isReceipt?"Payment – ":"Receipt – ")+p.party;ledger.push(L);bank.push(B);rows=[L.id,B.id];}
+      if(k==="shortReceipt"){const short=rnd(1,8)*25;B.amt=sign*(p.amt-short);ledger.push(L);bank.push(B);rows=[L.id,B.id];}
+      breaks.push({kind:k,rows,party:p.party,ref:p.ref});
+    });
+    ledger.sort((a,b)=>a.d-b.d); bank.sort((a,b)=>a.d-b.d);
+    return {ledger,bank,breaks,picked:new Set()};
+  }
+
+  function renderTable(el,rows){
+    el.innerHTML="<thead><tr><th>Date</th><th>Ref</th><th>Description</th><th class='amt'>Amount</th></tr></thead>";
+    const tb=document.createElement("tbody");
+    rows.forEach(r=>{
+      const tr=document.createElement("tr");
+      tr.className="row"; tr.dataset.id=r.id;
+      tr.innerHTML=`<td>${day(r.d)}</td><td class="ref">${r.ref}</td><td>${r.desc}</td><td class="amt">${fmt(r.amt)}</td>`;
+      tr.addEventListener("click",()=>toggle(r.id,tr));
+      tb.appendChild(tr);
+    });
+    el.appendChild(tb);
+  }
+
+  function toggle(id,tr){
+    if(locked) return;
+    if(state.picked.has(id)){state.picked.delete(id);tr.classList.remove("picked");}
+    else{state.picked.add(id);tr.classList.add("picked");}
+    $("hint").textContent=`${state.picked.size} line${state.picked.size===1?"":"s"} flagged · ${state.breaks.length} breaks hidden in this round`;
+  }
+
+  function startRound(){
+    const cfg=ROUNDS[round];
+    state=buildRound(cfg);
+    locked=false;
+    $("books").classList.remove("locked");
+    renderTable($("ledger"),state.ledger); renderTable($("bank"),state.bank);
+    $("lCount").textContent=state.ledger.length+" lines"; $("bCount").textContent=state.bank.length+" lines";
+    $("hRound").textContent=round+1;
+    $("hint").textContent=`${cfg.breaks} breaks hidden in this round`;
+    $("results").classList.add("hidden"); $("nextBtn").classList.add("hidden"); $("reconBtn").classList.remove("hidden");
+    roundStart=elapsed;
+  }
+
+  function reconcile(){
+    if(locked) return;
+    locked=true; $("books").classList.add("locked");
+    const breakRows=new Set(state.breaks.flatMap(b=>b.rows));
+    let found=0, wrong=0;
+    const items=[];
+    state.breaks.forEach(b=>{
+      const hit=b.rows.some(r=>state.picked.has(r));
+      if(hit) found++;
+      b.rows.forEach(r=>{const tr=document.querySelector(`tr[data-id="${r}"]`); if(tr){tr.classList.remove("picked");tr.classList.add(hit?"good":"miss");}});
+      items.push(`<li><span class="tag ${hit?"good":"miss"}">${hit?"Found":"Missed"}</span><div><b>${LABEL[b.kind]}</b>, ${b.party} (${b.ref}). ${EXPLAIN[b.kind]}</div></li>`);
+    });
+    state.picked.forEach(id=>{
+      if(!breakRows.has(id)){wrong++;const tr=document.querySelector(`tr[data-id="${id}"]`);if(tr){tr.classList.remove("picked");tr.classList.add("bad");}}
+    });
+    if(wrong) items.push(`<li><span class="tag bad">−${wrong*50}</span><div>${wrong} clean line${wrong===1?"":"s"} flagged. In real life that's time spent chasing a match that was never broken.</div></li>`);
+    const secs=elapsed-roundStart;
+    const bonus=found===state.breaks.length?Math.max(0,Math.round(150-secs*3)):0;
+    const pts=found*100-wrong*50+bonus;
+    score+=pts; state.found=found; $("hScore").textContent=score;
+    totals.found+=found; totals.total+=state.breaks.length;
+    $("results").innerHTML=`<h3>${found===state.breaks.length&&!wrong?'<span class="burst">✓</span> ':""}Round ${round+1}: ${found}/${state.breaks.length} breaks found · ${pts>=0?"+":""}${pts} pts${bonus?` (incl. +${bonus} speed bonus)`:""}</h3><ul class="exp">${items.join("")}</ul>`;
+    $("results").classList.remove("hidden");
+    $("reconBtn").classList.add("hidden");
+    $("nextBtn").textContent=round<ROUNDS.length-1?"Next round":"See final score";
+    $("nextBtn").classList.remove("hidden");
+    $("results").scrollIntoView({behavior:"smooth",block:"nearest"});
+  }
+
+  let totals={found:0,total:0};
+  function next(){
+    round++;
+    if(round<ROUNDS.length){startRound();window.scrollTo({top:0,behavior:"smooth"});return;}
+    finish();
+  }
+
+  function getBest(){try{return JSON.parse(localStorage.getItem("ftb_best")||"null");}catch(e){return null;}}
+  function setBest(b){try{localStorage.setItem("ftb_best",JSON.stringify(b));}catch(e){}}
+
+  function finish(){
+    clearInterval(timer);
+    $("game").classList.add("hidden"); $("final").classList.remove("hidden");
+    $("fScore").textContent=score;
+    $("fLine").textContent=`${totals.found}/${totals.total} breaks found in ${elapsed.toFixed(1)}s`;
+    const best=getBest();
+    if(!best||score>best.score){setBest({score,time:elapsed,found:totals.found,total:totals.total});$("fBest").textContent=best?"New personal best!":"Your first score is on the board.";}
+    else $("fBest").textContent=`Your best: ${best.score} (${best.found}/${best.total} in ${best.time.toFixed(1)}s)`;
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  function start(){
+    round=0;score=0;elapsed=0;totals={found:0,total:0};
+    $("hScore").textContent="0";
+    $("intro").classList.add("hidden"); $("final").classList.add("hidden"); $("game").classList.remove("hidden");
+    t0=performance.now(); clearInterval(timer);
+    timer=setInterval(()=>{if(!locked){elapsed=(performance.now()-t0)/1000;}else{t0=performance.now()-elapsed*1000;} $("hTime").textContent=elapsed.toFixed(1)+"s";},100);
+    startRound();
+  }
+
+  function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),2200);}
+
+  $("startBtn").onclick=start;
+  $("reconBtn").onclick=reconcile;
+  $("nextBtn").onclick=next;
+  $("againBtn").onclick=start;
+  $("shareBtn").onclick=async()=>{
+    const url=location.href.split("#")[0];
+    const text=`I scored ${score} on Find the Break, spotting ${totals.found}/${totals.total} reconciliation breaks in ${elapsed.toFixed(1)}s. Can you beat me? ${url}`;
+    try{await navigator.clipboard.writeText(text);toast("Copied. Paste it into a LinkedIn comment.");}
+    catch(e){prompt("Copy this:",text);}
+  };
+  const b=getBest(); if(b) $("best").textContent=`Your best so far: ${b.score} (${b.found}/${b.total} in ${b.time.toFixed(1)}s)`;
+})();
+</script>
+</body>
+</html>
